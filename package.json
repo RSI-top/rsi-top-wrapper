@@ -1,0 +1,8 @@
+{
+  "name": "rsi-top-planner-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Pinned Pi runtime for selective history retrieval",
+  "engines": { "node": ">=22.19.0" },
+  "dependencies": { "@earendil-works/pi-coding-agent": "0.84.1" }
+}

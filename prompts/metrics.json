@@ -1,0 +1,290 @@
+{
+  "schema": "oe_metric_definitions_v4",
+  "definition_version": "oe_metric_dashboard_m25_v1",
+  "objective": {
+    "authoritative_field": "cycles",
+    "direction": "lower_is_better",
+    "normalized_quality": "-cycles"
+  },
+  "scaling_contract": {
+    "causal_reference": "strictly earlier available observations",
+    "representations": [
+      "value",
+      "percentile",
+      "robust_z",
+      "availability"
+    ],
+    "tie_rule": "midrank",
+    "robust_z": "(value - median(reference)) / (1.4826 * MAD(reference))",
+    "history_gate_seconds": 3600,
+    "minimum_reference_n": 12,
+    "missing_value_rule": "null_with_availability_never_zero_fill"
+  },
+  "scope_order": [
+    "unary",
+    "binary",
+    "regional",
+    "global"
+  ],
+  "metrics": {
+    "U1": {
+      "name": "cycles",
+      "scope": "unary",
+      "definition": "Authoritative performance of the current valid candidate.",
+      "formula": "cycles",
+      "high_means": "Worse measured task performance because lower cycles is authoritative.",
+      "low_means": "Better measured task performance.",
+      "scaling_reference": "global"
+    },
+    "U2": {
+      "name": "valid_attempt",
+      "scope": "unary",
+      "definition": "Whether the attempt reached an authoritative valid evaluation.",
+      "formula": "1 if eligible else 0",
+      "high_means": "The attempt produced valid evidence.",
+      "low_means": "The attempt did not produce valid evidence.",
+      "scaling_reference": "global"
+    },
+    "U17": {
+      "name": "recorded_change_count",
+      "scope": "unary",
+      "definition": "Number of distinct changes recorded for the current attempt.",
+      "formula": "count(recorded Change entries)",
+      "high_means": "The transition contains more jointly changed mechanisms and is harder to attribute.",
+      "low_means": "The transition is more nearly isolated.",
+      "scaling_reference": "global"
+    },
+    "B1": {
+      "name": "parent_gain_cycles",
+      "scope": "binary",
+      "definition": "Measured improvement relative to the actual parent.",
+      "formula": "parent_cycles - cycles",
+      "high_means": "The child improved its parent more.",
+      "low_means": "The child improved less or regressed.",
+      "scaling_reference": "global"
+    },
+    "B2": {
+      "name": "frontier_relative_gap",
+      "scope": "binary",
+      "definition": "Candidate gap to the frontier immediately before the attempt.",
+      "formula": "(cycles - frontier_before_cycles) / abs(frontier_before_cycles)",
+      "high_means": "The candidate is farther behind the frontier.",
+      "low_means": "The candidate is closer to or better than the frontier.",
+      "scaling_reference": "global"
+    },
+    "B3": {
+      "name": "parent_code_distance",
+      "scope": "binary",
+      "definition": "Normalized implementation distance from the actual parent.",
+      "formula": "1 - code_similarity(parent, child)",
+      "high_means": "The child moved farther from its parent in code space.",
+      "low_means": "The child stayed closer to its parent.",
+      "scaling_reference": "global"
+    },
+    "B4": {
+      "name": "frontier_code_distance",
+      "scope": "binary",
+      "definition": "Normalized implementation distance from the frozen frontier reference.",
+      "formula": "1 - code_similarity(frontier_reference, child)",
+      "high_means": "The child is structurally farther from the frontier reference.",
+      "low_means": "The child shares more of the frontier backbone.",
+      "scaling_reference": "frontier_epoch"
+    },
+    "B5": {
+      "name": "nearest_history_similarity",
+      "scope": "binary",
+      "definition": "Similarity to the closest strictly earlier implementation state.",
+      "formula": "max_j<i code_similarity(code_i, code_j)",
+      "high_means": "The candidate is more redundant with prior code.",
+      "low_means": "The candidate is more distinct from prior code.",
+      "scaling_reference": "global"
+    },
+    "B14": {
+      "name": "meaningful_relative_gain",
+      "scope": "binary",
+      "definition": "Causal progress-anchor-relative gain.",
+      "formula": "(progress_anchor_cycles - cycles) / abs(progress_anchor_cycles)",
+      "high_means": "The attempt makes a larger meaningful move.",
+      "low_means": "The attempt makes a smaller meaningful move.",
+      "scaling_reference": "global"
+    },
+    "B17": {
+      "name": "gap_in_recent_step_units",
+      "scope": "binary",
+      "definition": "Authoritative frontier gap measured in recent meaningful frontier-step units.",
+      "formula": "gap_to_frontier_cycles / median(last_5_meaningful_frontier_gains)",
+      "high_means": "The candidate is more typical frontier steps away.",
+      "low_means": "The candidate is fewer typical frontier steps from the frontier.",
+      "scaling_reference": "frontier_epoch"
+    },
+    "R2": {
+      "name": "frontier_relative_spread_F",
+      "scope": "regional",
+      "definition": "Implementation spread of the latest complete eligible-state window relative to the frozen frontier code.",
+      "formula": "normalized_effective_spread(frontier_relative_fingerprints_W12)",
+      "high_means": "Recent states are more dispersed around the frontier reference.",
+      "low_means": "Recent states are more concentrated around the frontier reference.",
+      "scaling_reference": "frontier_epoch"
+    },
+    "R3": {
+      "name": "root_relative_spread_S",
+      "scope": "regional",
+      "definition": "Implementation spread of the latest complete eligible-state window relative to the fixed root code.",
+      "formula": "normalized_effective_spread(root_relative_fingerprints_W12)",
+      "high_means": "Recent states are more globally dispersed.",
+      "low_means": "Recent states share more root-relative structure.",
+      "scaling_reference": "global"
+    },
+    "R4": {
+      "name": "parent_selection_concentration",
+      "scope": "regional",
+      "definition": "Concentration of immediate-parent selection in the latest complete window.",
+      "formula": "sum(parent_share[p] ** 2)",
+      "high_means": "Search allocation is concentrated on fewer parents.",
+      "low_means": "Search allocation is spread across more parents.",
+      "scaling_reference": "global"
+    },
+    "R5": {
+      "name": "window_frontier_gain_cycles",
+      "scope": "regional",
+      "definition": "Total measured frontier improvement across the latest complete window.",
+      "formula": "frontier_before_at_window_start - frontier_at_window_end",
+      "high_means": "The recent window made more frontier progress.",
+      "low_means": "The recent window made less frontier progress.",
+      "scaling_reference": "global"
+    },
+    "R7": {
+      "name": "window_redundancy_rate",
+      "scope": "regional",
+      "definition": "Fraction of the latest complete terminal window that is an exact duplicate or no-op.",
+      "formula": "count(exact_duplicate or no_op) / W",
+      "high_means": "More recent work units are mechanically redundant.",
+      "low_means": "Fewer recent work units are mechanically redundant.",
+      "scaling_reference": "global"
+    },
+    "R8": {
+      "name": "window_valid_rate",
+      "scope": "regional",
+      "definition": "Fraction of the latest complete terminal window with an authoritative eligible evaluation.",
+      "formula": "eligible_attempt_count / W",
+      "high_means": "More recent work units produced valid measured candidates.",
+      "low_means": "Fewer recent work units produced valid measured candidates.",
+      "scaling_reference": "global"
+    },
+    "R10": {
+      "name": "window_frontier_conversion_rate",
+      "scope": "regional",
+      "definition": "Fraction of eligible attempts in the latest complete terminal window that made a meaningful frontier improvement.",
+      "formula": "meaningful_frontier_improvement_count / eligible_attempt_count",
+      "high_means": "Recent valid attempts convert into meaningful frontier progress more often.",
+      "low_means": "Recent valid attempts convert into meaningful frontier progress less often.",
+      "scaling_reference": "global"
+    },
+    "R12": {
+      "name": "within_one_recent_step_rate",
+      "scope": "regional",
+      "definition": "Fraction of valid W12 candidates within one recent verified frontier step.",
+      "formula": "count(gap_cycles <= median(last_5_meaningful_steps)) / valid_count",
+      "high_means": "More recent candidates remain competitively close.",
+      "low_means": "Fewer recent candidates remain competitively close.",
+      "scaling_reference": "frontier_epoch"
+    },
+    "R15": {
+      "name": "dominant_failure_signature_mass",
+      "scope": "regional",
+      "definition": "Largest failure-signature share among failed attempts in terminal W12.",
+      "formula": "max_signature_count / failed_attempt_count",
+      "high_means": "Recent failures are more concentrated on one repeated cause.",
+      "low_means": "Recent failures are more heterogeneous.",
+      "scaling_reference": "global"
+    },
+    "R16": {
+      "name": "repeated_failure_rate",
+      "scope": "regional",
+      "definition": "Fraction of failed attempts in terminal W12 whose failure signature appeared strictly earlier.",
+      "formula": "repeated_failed_attempt_count / failed_attempt_count",
+      "high_means": "More recent failures repeat already observed causes.",
+      "low_means": "Fewer recent failures repeat known causes.",
+      "scaling_reference": "global"
+    },
+    "R17": {
+      "name": "quality_conditioned_frontier_diversity",
+      "scope": "regional",
+      "definition": "Implementation spread among valid W12 candidates within one recent meaningful frontier step.",
+      "formula": "normalized_effective_spread(frontier_relative_fingerprints(near_frontier_valid_W12))",
+      "high_means": "Multiple structurally distinct candidates remain competitive with the frontier.",
+      "low_means": "Competitive recent candidates are more structurally concentrated.",
+      "scaling_reference": "frontier_epoch"
+    },
+    "G1": {
+      "name": "seconds_since_meaningful_improvement",
+      "scope": "global",
+      "definition": "Wall-clock time since the last meaningful frontier improvement.",
+      "formula": "cutoff_time - last_meaningful_improvement_time",
+      "high_means": "Meaningful progress has been absent longer.",
+      "low_means": "Meaningful progress occurred recently.",
+      "scaling_reference": "global"
+    },
+    "G9": {
+      "name": "frontier_epoch_age_steps",
+      "scope": "global",
+      "definition": "Terminal steps elapsed in the current frontier epoch.",
+      "formula": "cutoff_seq - F_reference_seq",
+      "high_means": "The current frontier has persisted longer.",
+      "low_means": "The current frontier is newer.",
+      "scaling_reference": "frontier_epoch"
+    },
+    "G10": {
+      "name": "best_descendant_cycles",
+      "scope": "global",
+      "definition": "Best authoritative cycles reached by descendants of this row by the frozen audit cutoff.",
+      "formula": "min(descendant cycles observed by audit cutoff)",
+      "high_means": "The observed descendants are worse because lower cycles is authoritative.",
+      "low_means": "The branch produced a better descendant by the audit cutoff.",
+      "scaling_reference": "audit_cutoff"
+    },
+    "G11": {
+      "name": "descendant_frontier_move_count",
+      "scope": "global",
+      "definition": "Number of verified frontier moves produced by this row's descendants by the frozen audit cutoff.",
+      "formula": "count(descendant frontier moves observed by audit cutoff)",
+      "high_means": "The branch produced more later frontier moves.",
+      "low_means": "The branch produced fewer later frontier moves.",
+      "scaling_reference": "audit_cutoff"
+    }
+  },
+  "mechanistic_profiles": {
+    "engine_capacity": {
+      "role": "A compact mechanistic descriptor used after evidence selection to explain or test a measured transition. Absolute values or deltas do not justify an intervention direction by themselves.",
+      "engine_order": [
+        "valu",
+        "load",
+        "store",
+        "flow",
+        "alu"
+      ],
+      "columns": [
+        "capacity_floor",
+        "dominant_engines",
+        "per_engine_floor",
+        "parent_delta",
+        "scratch_dependency_floor",
+        "residual_to_modeled_lower_bounds"
+      ],
+      "parameters": {
+        "workload": {
+          "forest_height": 10,
+          "batch_size": 256,
+          "rounds": 16
+        },
+        "engine_slot_limits": {
+          "alu": 12,
+          "valu": 6,
+          "load": 2,
+          "store": 2,
+          "flow": 1
+        }
+      }
+    }
+  }
+}

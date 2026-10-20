@@ -1,0 +1,64 @@
+# OpenEvolve config for the Anthropic performance takehome.
+# runner.py replaces the model name and injects its DeepSeek or Gemini client
+# (--llm-provider) onto every model config; api_base / temperature / top_p
+# here are therefore unused.
+
+# Effectively unlimited — the run is stopped by the $400 budget, not iterations
+max_iterations: 1000000
+checkpoint_interval: 10
+log_level: "INFO"
+random_seed: 42
+
+# Append every accepted parent -> child transition as soon as it completes.
+# The companion attempts.jsonl stream (installed by runner.py) also captures
+# attempts that never produce a child: API failures, malformed diffs, worker
+# exceptions, cancellations, and shutdowns.
+evolution_trace:
+  enabled: true
+  format: "jsonl"
+  include_code: true
+  include_prompts: true
+  buffer_size: 1
+  compress: false
+
+llm:
+  models:
+    - name: "deepseek-v4-flash"  # overridden by runner.py
+      weight: 1.0
+  max_tokens: 128000       # room for high-effort reasoning + full-code output
+  timeout: 2400            # high-effort reasoning turns can run many minutes
+  retries: 4
+  retry_delay: 10
+  reasoning_effort: "high"
+
+prompt:
+  # runner.py appends the full problem.py source (the ISA spec) to this
+  system_message: ""  # loaded from prompts/worker_openevolve.md by runner.py
+
+  num_top_programs: 3
+  num_diverse_programs: 2
+  include_artifacts: true
+  max_artifact_bytes: 8192
+
+database:
+  # Redundant prompt/response copy in checkpoints for post-run recovery.
+  log_prompts: true
+  population_size: 400
+  archive_size: 80
+  num_islands: 4
+  elite_selection_ratio: 0.15
+  exploration_ratio: 0.25
+  exploitation_ratio: 0.6
+  migration_interval: 25
+  migration_rate: 0.1
+  feature_dimensions: ["complexity", "diversity"]
+
+evaluator:
+  timeout: 900             # outer cap; eval_build/eval_score have their own
+  cascade_evaluation: false
+  parallel_evaluations: 4  # 4 concurrent evolve+evaluate workers
+  enable_artifacts: true
+  use_llm_feedback: false
+
+diff_based_evolution: true
+max_code_length: 60000

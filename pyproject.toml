@@ -1,0 +1,28 @@
+[project]
+name = "rsi-top-takehome"
+version = "0.1.0"
+description = "RSI-top on the Anthropic performance takehome"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "openevolve",
+  "shinka-evolve",
+  "meta-agent-audit",
+  "anthropic",
+  "google-genai",
+  "pip>=24", # Shinka records its evaluator environment with pip freeze.
+]
+
+[dependency-groups]
+test = ["pytest>=8,<9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+openevolve = { path = "integrations/openevolve-takehome/vendor/openevolve", editable = true }
+shinka-evolve = { path = "integrations/shinka-takehome/vendor/shinkaevolve", editable = true }
+meta-agent-audit = { path = "shared/meta-agent-audit", editable = true }

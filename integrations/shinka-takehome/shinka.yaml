@@ -1,0 +1,58 @@
+# Shinka-native search profile under the same experimental envelope as the
+# OpenEvolve control: same worker model, $400, four concurrent model calls,
+# identical evaluator and seed program. Embeddings use OpenRouter; meta recommendation
+# and LLM novelty judging remain disabled.
+
+# Concurrency is part of the shared experiment envelope (stock Shinka defaults
+# to six proposal jobs, but that would exceed OpenEvolve's four LLM workers).
+max_evaluation_jobs: 4
+max_proposal_jobs: 4
+max_db_workers: 2
+
+db_config:
+  # Stock Shinka search defaults.
+  num_islands: 2
+  archive_size: 40
+  elite_selection_ratio: 0.3
+  num_archive_inspirations: 1
+  num_top_k_inspirations: 1
+  migration_interval: 10
+  migration_rate: 0.0
+  island_elitism: true
+  parent_selection_strategy: weighted
+  parent_selection_lambda: 10
+  archive_selection_strategy: "fitness"
+  island_selection_strategy: uniform
+  archive_criteria:
+    combined_score: 1.0
+
+evo_config:
+  # Stock Shinka mutation mix and candidate-level retry behavior.
+  patch_types: ["diff", "full", "cross"]
+  patch_type_probs: [0.6, 0.3, 0.1]
+  # Effectively unlimited — max_api_costs is the real stop condition
+  num_generations: 100000
+  # Hard USD budget (overridden by run_evo.py --budget). ShinkaEvolve tracks
+  # actual + in-flight API cost natively and stops gracefully at this cap;
+  # on resume it reloads prior spend from the DB, so this is a lifetime total.
+  max_api_costs: 400.0
+  max_novelty_attempts: 3
+  max_patch_resamples: 3
+  max_patch_attempts: 1
+  job_type: local
+  language: python
+  llm_models: ["deepseek-v4-flash"]  # overridden by run_evo.py --llm-model
+  llm_kwargs:
+    temperatures: [0.7]
+    reasoning_efforts: ["high"]
+    max_tokens: [32000]
+  # Keep Meta recommendation and LLM novelty judging off. Embeddings are used
+  # for stored semantic vectors and Shinka's embedding-space analysis.
+  meta_rec_interval: null
+  meta_llm_models: null
+  embedding_model: "openrouter/openai/text-embedding-3-small"
+  novelty_llm_models: null
+  use_text_feedback: true
+  init_program_path: initial.py
+  results_dir: results
+  llm_dynamic_selection: null
